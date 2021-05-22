@@ -6,11 +6,11 @@
 #include <fstream>
 
 #include "bencode.h"
+
 #include "common_log.h"
 
 int main(int argc, char **argv)
 {
-	std::string bt_file_content = "";
 	std::ifstream bt_file_stream;
 	char *bt_file_buffer = NULL;
 	int bt_file_size = 0;
@@ -30,25 +30,22 @@ int main(int argc, char **argv)
 
 	LOG_DEBUG("bt_file_size:%d", bt_file_size);
 
-	bt_file_size++;
-	bt_file_buffer = (char *)malloc(bt_file_size);
-	memset(bt_file_buffer, 0, bt_file_size);
-
-	bt_file_stream.read(bt_file_buffer, bt_file_size);
-	bt_file_stream.close();
-
-	bt_file_content = bt_file_buffer;
+	bt_file_buffer = (char *)malloc(bt_file_size + 1);
+	memset(bt_file_buffer, 0, bt_file_size + 1);
 
 	if ( bt_file_buffer )
 	{
+		bt_file_stream.read(bt_file_buffer, bt_file_size);
+		bt_file_stream.close();
+
+		//LOG_DEBUG("bt_file_stream:%s len:%d", bt_file_buffer, bt_file_size);
+
+		bencode.setRawBuffer(bt_file_buffer, bt_file_size);
+		bencode.decode();
+
 		free(bt_file_buffer);
 		bt_file_buffer = NULL;
 	}
-
-	//LOG_DEBUG("bt_file_stream:%s", bt_file_content.c_str());
-
-	bencode.setRaw(bt_file_content); 
-	bencode.decode(); 
 
 	return 0;
 }

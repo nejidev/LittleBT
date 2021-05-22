@@ -6,18 +6,25 @@
 
 class Bencode {
 private:
-	std::string raw;
+	char *raw_buffer;
+	int   raw_buffer_len;
+	char info_hash_digest[20];
+
 	std::vector<std::string> announce_list;
 	std::string name;
+	std::string info_hash;
+	std::string info_hash_url_encode;
+	int info_hash_start;
+	int info_hash_end;
 	int creation_time;
 	int length;
 	int piece_length;
 
 public:
 	Bencode();
-	Bencode(std::string &str);
-	void setRaw(std::string &str);
+	void setRawBuffer(char *buff, int len);
 	void decode();
+	void sha1Encode(const char *buff, int len);
 	~Bencode();
 };
 

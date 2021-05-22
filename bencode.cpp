@@ -7,21 +7,41 @@
 #include <openssl/sha.h>
 #include <curl/curl.h>
 
+// #define LOG_DEFAULT_LEVEL 2
+
 #include "common_log.h"
 
-Bencode::Bencode():raw{""}
+Bencode::Bencode():raw_buffer{NULL}, raw_buffer_len{0}
 {
 
 }
 
-Bencode::Bencode(std::string &str):raw{str}
+Bencode::~Bencode()
 {
+	if ( raw_buffer )
+	{
+		free(raw_buffer);
+		raw_buffer = NULL;
+	}
 
+	announce_list.clear();
 }
 
-void Bencode::setRaw(std::string &str)
+void Bencode::setRawBuffer(char *buff, int len)
 {
-	raw = str;
+	if ( buff && 0 < len )
+	{
+		raw_buffer = (char *)malloc(len);
+
+		if ( ! raw_buffer )
+		{
+			return ;
+		}
+
+		memset(raw_buffer, 0, len);
+		memcpy(raw_buffer, buff, len);
+		raw_buffer_len = len;
+	}
 }
 
 static int findInt(const char *buff, int len, int *out_int)
@@ -31,7 +51,6 @@ static int findInt(const char *buff, int len, int *out_int)
 
 	for ( i=0; i<len; i++ )
 	{
-		//if ( ':' == buff[i] )
 		if ( '0' > buff[i] || '9' < buff[i] )
 		{
 			break;
@@ -46,34 +65,40 @@ static int findInt(const char *buff, int len, int *out_int)
 	return pos;
 }
 
-static std::string sha1Encode(const char *buff, int len)
+void Bencode::sha1Encode(const char *buff, int len)
 {
 	int i = 0;
-	std::string sha1;
-	char *sha1_url_encode = NULL;
-	unsigned char digest[SHA_DIGEST_LENGTH] = { 0 };
+	char *url_encode   = NULL;
+	char format_buffer[8] = { 0 };
 
-	SHA1((unsigned char *)buff, len, (unsigned char *)&digest);
+	LOG_DEBUG("buff len:%d hex dump", len);
 
-	LOG_DEBUG("sha1 dump:");
-
-	for ( i=0; i<sizeof(digest); i++ )
+	for ( i=0; i<=len; i++ )
 	{
-		printf("%02X ", digest[i]);
+		LOG_PRINTF("%02X ", (unsigned char)buff[i]);
 	}
 
-	sha1_url_encode = curl_escape((const char *)digest, sizeof(digest));
+	SHA1((unsigned char *)buff, len, (unsigned char *)info_hash_digest);
 
-	if ( sha1_url_encode )
+	for ( i=0; i<sizeof(info_hash_digest); i++ )
 	{
-		sha1 = sha1_url_encode;
-		LOG_DEBUG("sha1 encode:%s", sha1_url_encode);
+		snprintf(format_buffer, sizeof(format_buffer), "%02X", (unsigned char)info_hash_digest[i]);
+		info_hash.append(format_buffer);
 	}
 
-	curl_free(sha1_url_encode);
-	sha1_url_encode = NULL;
+	LOG_DEBUG("\r\nsha1 dump: %s", info_hash.c_str());
 
-	return sha1;
+	url_encode = curl_escape((const char *)info_hash_digest, sizeof(info_hash_digest));
+
+	if ( url_encode )
+	{
+		info_hash_url_encode = url_encode;
+	}
+
+	LOG_DEBUG("sha1 encode:%s", url_encode);
+
+	curl_free(url_encode);
+	url_encode = NULL;
 }
 
 void Bencode::decode()
@@ -82,8 +107,8 @@ void Bencode::decode()
 	int pos = 0;
 	int int_val = 0;
 	char *str_val = NULL;
-	int len = raw.length();
-	const char *buff = raw.c_str();
+	int len = raw_buffer_len;
+	const char *buff = raw_buffer;
 
 	for ( i=0; i<len; i++ )
 	{
@@ -137,20 +162,29 @@ void Bencode::decode()
 				}
 
 				LOG_DEBUG("str_val:%s len:%ld", str_val, strlen(str_val));
+
 			}
 		}
 
 		i += pos;
 		i += int_val;
 
+		if ( str_val )
+		{
+			if ( 0 == strcmp("info", str_val) )
+			{
+				info_hash_start = i + 1;
+				info_hash_end = len - i - 1 - 1;
+			}
+			if ( 0 == strcmp("nodes", str_val) )
+			{
+				info_hash_end = i - info_hash_start - strlen("nodes") - 3;
+			}
+		}
+
 		int_val = 0;
 		pos = 0;
 	}
 
-	sha1Encode("1234", 4);
-}
-
-Bencode::~Bencode()
-{
-	announce_list.clear();
+	sha1Encode(buff + info_hash_start, info_hash_end);
 }
