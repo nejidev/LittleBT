@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "fileEntity.h"
+
 class Bencode {
 private:
 	char *raw_buffer;
@@ -20,10 +22,13 @@ private:
 	int length;
 	int piece_length;
 
+	std::vector<FileEntity> file_entity_list;
+
 public:
 	Bencode();
 	void setRawBuffer(char *buff, int len);
 	void decode();
+	void showFileEntity();
 	void sha1Encode(const char *buff, int len);
 	~Bencode();
 };

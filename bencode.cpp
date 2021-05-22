@@ -25,6 +25,7 @@ Bencode::~Bencode()
 	}
 
 	announce_list.clear();
+	file_entity_list.clear();
 }
 
 void Bencode::setRawBuffer(char *buff, int len)
@@ -73,10 +74,10 @@ void Bencode::sha1Encode(const char *buff, int len)
 
 	LOG_DEBUG("buff len:%d hex dump", len);
 
-	for ( i=0; i<=len; i++ )
-	{
-		LOG_PRINTF("%02X ", (unsigned char)buff[i]);
-	}
+	// for ( i=0; i<=len; i++ )
+	// {
+	// 	LOG_PRINTF("%02X ", (unsigned char)buff[i]);
+	// }
 
 	SHA1((unsigned char *)buff, len, (unsigned char *)info_hash_digest);
 
@@ -109,6 +110,8 @@ void Bencode::decode()
 	char *str_val = NULL;
 	int len = raw_buffer_len;
 	const char *buff = raw_buffer;
+	bool capture_path = false;
+	FileEntity file_entity;
 
 	for ( i=0; i<len; i++ )
 	{
@@ -137,6 +140,9 @@ void Bencode::decode()
 				{
 					length = int_val;
 					int_val = 0;
+
+					file_entity.setLength(length);
+
 					LOG_DEBUG("length:%d", length);
 				}
 				else if ( 0 == strcmp("piece length", str_val) )
@@ -144,6 +150,10 @@ void Bencode::decode()
 					piece_length = int_val;
 					int_val = 0;
 					LOG_DEBUG("piece_length:%d", piece_length);
+				}
+				else if( 0 == strcmp("path", str_val) )
+				{
+					capture_path = true;
 				}
 
 				free(str_val);
@@ -161,8 +171,17 @@ void Bencode::decode()
 					announce_list.push_back(str_val);
 				}
 
-				LOG_DEBUG("str_val:%s len:%ld", str_val, strlen(str_val));
+				if ( capture_path )
+				{
+					capture_path = false;
 
+					file_entity.setPath(str_val);
+					file_entity_list.push_back(file_entity);
+
+					LOG_DEBUG("capture path:%s", str_val);
+				}
+
+				LOG_DEBUG("str_val:%s len:%ld", str_val, strlen(str_val));
 			}
 		}
 
@@ -187,4 +206,25 @@ void Bencode::decode()
 	}
 
 	sha1Encode(buff + info_hash_start, info_hash_end);
+}
+
+void Bencode::showFileEntity()
+{
+	int file_length = 0;
+	std::string file_path = "";
+
+	for ( auto &file : file_entity_list )
+	{
+		file_length = file.getLength();
+		file_path   = file.getPath();
+
+		//filter _____padding_file_0_如果您看到此文件，请升级到BitComet(比特彗星)0.85或以上版本____
+
+		if ( file_path.find("_____padding_file_" ) )
+		{
+			LOG_INFO("file length:%d %d.%dMB path:%s", file_length, file_length/1024/1024,
+				(file_length - (file_length/1024/1024 * 1024 * 1024))*1000/1024/1024/10,
+				file_path.c_str());
+		}
+	}
 }

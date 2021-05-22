@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 
 		bencode.setRawBuffer(bt_file_buffer, bt_file_size);
 		bencode.decode();
+		bencode.showFileEntity();
 
 		free(bt_file_buffer);
 		bt_file_buffer = NULL;
