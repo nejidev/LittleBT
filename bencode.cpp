@@ -11,7 +11,7 @@
 
 #include "common_log.h"
 
-Bencode::Bencode():raw_buffer{NULL}, raw_buffer_len{0}
+Bencode::Bencode():raw_buffer{NULL}, raw_buffer_len{0},is_files{false}
 {
 
 }
@@ -195,14 +195,28 @@ void Bencode::decode()
 				info_hash_start = i + 1;
 				info_hash_end = len - i - 1 - 1;
 			}
-			if ( 0 == strcmp("nodes", str_val) )
+			else if ( 0 == strcmp("nodes", str_val) )
 			{
 				info_hash_end = i - info_hash_start - strlen("nodes") - 3;
+			}
+
+			else if ( strstr(str_val, "files") )
+			{
+				is_files = true;
 			}
 		}
 
 		int_val = 0;
 		pos = 0;
+	}
+
+	if ( is_files && ! file_entity_list.empty() )
+	{
+		file_entity = file_entity_list.back();
+		file_entity_list.pop_back();
+		files_path = file_entity.getPath();
+
+		LOG_DEBUG("files_path:%s", files_path.c_str());
 	}
 
 	sha1Encode(buff + info_hash_start, info_hash_end);

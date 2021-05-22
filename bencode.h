@@ -4,14 +4,16 @@
 #include <string>
 #include <vector>
 
-#include "fileEntity.h"
+#include "file_entity.h"
 
 class Bencode {
 private:
 	char *raw_buffer;
 	int   raw_buffer_len;
 	char info_hash_digest[20];
+	bool is_files;
 
+	std::string files_path;
 	std::vector<std::string> announce_list;
 	std::string name;
 	std::string info_hash;
