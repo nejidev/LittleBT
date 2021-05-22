@@ -151,7 +151,7 @@ void Bencode::decode()
 					int_val = 0;
 					LOG_DEBUG("piece_length:%d", piece_length);
 				}
-				else if( 0 == strcmp("path", str_val) )
+				else if( 0 == strcmp("path", str_val) || 0 == strcmp("name", str_val) )
 				{
 					capture_path = true;
 				}
