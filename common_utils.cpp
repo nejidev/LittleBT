@@ -21,7 +21,7 @@
 
 #define MAX_IFS 64
 
-// #define LOG_DEFAULT_LEVEL 2
+#define LOG_DEFAULT_LEVEL 2
 
 #include "common_log.h"
 
@@ -125,6 +125,19 @@ int fileReadBin(const char *path, char *buff, int length)
 	file_stream.close();
 
 	return std::min(file_size, length);
+}
+
+int fileGetSize(const char *path)
+{
+	int file_size = 0;
+	std::ifstream file_stream(path, std::ios::in | std::ios::binary);
+
+	file_stream.seekg(0, std::ios::end);
+	file_size = file_stream.tellg();
+	file_stream.seekg(0, std::ios::beg);
+	file_stream.close();
+
+	return file_size;
 }
 
 std::string inetNtoaString(const unsigned char *buff)

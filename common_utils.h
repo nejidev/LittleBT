@@ -7,6 +7,7 @@ std::string urlEncode(const char *buff, int length);
 std::string getLocalIP();
 void fileWriteBin(const char *path, const char *buff, int length);
 int fileReadBin(const char *path, char *buff, int length);
+int fileGetSize(const char *path);
 std::string inetNtoaString(const unsigned char *buff);
 std::string getLocalPeerId();
 

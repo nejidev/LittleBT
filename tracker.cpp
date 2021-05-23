@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 
 #include <curl/curl.h>
 
@@ -224,6 +225,7 @@ void Tracker::peersDecode(const char *buff, int len)
 		{
 			ip = inetNtoaString(peer->ip);
 			memcpy(&port, peer->port, sizeof(peer->port));
+			port = ntohs(port);
 
 			LOG_DEBUG("peers ip:%s port:%d", ip.c_str(), port);
 		}
