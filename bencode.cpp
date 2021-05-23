@@ -9,7 +9,7 @@
 
 #include "common_utils.h"
 
-// #define LOG_DEFAULT_LEVEL 2
+#define LOG_DEFAULT_LEVEL 2
 
 #include "common_log.h"
 

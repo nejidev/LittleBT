@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
 			Tracker *tracker = new Tracker(announce, bencode.getInfoHash());
 
-			tracker->start();
+			tracker->startEvent();
 
 			tracker_list.push_back(tracker);
 		}

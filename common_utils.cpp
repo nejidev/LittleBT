@@ -10,6 +10,13 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <chrono>
+#include <random>
+
 #include <curl/curl.h>
 
 #define MAX_IFS 64
@@ -69,6 +76,7 @@ std::string getLocalIP()
 			if ( 0 > ioctl(sockfd, SIOCGIFHWADDR, &ifreq) )
 			{
 				LOG_ERROR("SIOCGIFHWADDR(%s): failed", ifreq.ifr_name);
+				close(sockfd);
 				return "";
 			}
 
@@ -85,10 +93,78 @@ std::string getLocalIP()
 
 			if ( "127.0.0.1" != ip )
 			{
+				close(sockfd);
 				return ip;
 			}
 		}
 	}
 
+	close(sockfd);
 	return "";
+}
+
+void fileWriteBin(const char *path, const char *buff, int length)
+{
+	std::ofstream file_stream(path, std::ios::out | std::ios::binary | std::ios::trunc);
+
+	file_stream.write(buff, length);
+	file_stream.close();
+}
+
+int fileReadBin(const char *path, char *buff, int length)
+{
+	int file_size = 0;
+	std::ifstream file_stream(path, std::ios::in | std::ios::binary);
+
+	file_stream.seekg(0, std::ios::end);
+	file_size = file_stream.tellg();
+	file_stream.seekg(0, std::ios::beg);
+
+	file_stream.read(buff, std::min(file_size, length));
+
+	file_stream.close();
+
+	return std::min(file_size, length);
+}
+
+std::string inetNtoaString(const unsigned char *buff)
+{
+	struct in_addr addr = { 0 };
+
+	if ( ! buff )
+	{
+		return "";
+	}
+
+	memcpy(&addr, buff, sizeof(addr));
+	return inet_ntoa(addr);
+}
+
+std::string getLocalPeerId()
+{
+	static std::string peer_id = "";
+
+	if ( peer_id.empty() )
+	{
+		static std::default_random_engine e;
+		static std::uniform_int_distribution<unsigned> u(0, 9);
+
+		auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		std::stringstream time_fmt;
+
+		e.seed(time);
+
+		time_fmt << std::put_time(std::localtime(&time), "LBT%Y%m%d%H%M%S");
+
+		time_fmt << u(e);
+		time_fmt << u(e);
+		time_fmt << u(e);
+
+		peer_id = time_fmt.str();
+
+		LOG_DEBUG("peer_id:%s", peer_id.c_str());
+
+	}
+
+	return peer_id;
 }
