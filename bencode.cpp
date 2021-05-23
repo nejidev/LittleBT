@@ -7,6 +7,8 @@
 #include <openssl/sha.h>
 #include <curl/curl.h>
 
+#include "common_utils.h"
+
 // #define LOG_DEFAULT_LEVEL 2
 
 #include "common_log.h"
@@ -69,7 +71,6 @@ static int findInt(const char *buff, int len, int *out_int)
 void Bencode::sha1Encode(const char *buff, int len)
 {
 	int i = 0;
-	char *url_encode   = NULL;
 	char format_buffer[8] = { 0 };
 
 	LOG_DEBUG("buff len:%d hex dump", len);
@@ -89,17 +90,9 @@ void Bencode::sha1Encode(const char *buff, int len)
 
 	LOG_DEBUG("\r\nsha1 dump: %s", info_hash.c_str());
 
-	url_encode = curl_escape((const char *)info_hash_digest, sizeof(info_hash_digest));
+	info_hash_url_encode = urlEncode((const char *)info_hash_digest, sizeof(info_hash_digest));
 
-	if ( url_encode )
-	{
-		info_hash_url_encode = url_encode;
-	}
-
-	LOG_DEBUG("sha1 encode:%s", url_encode);
-
-	curl_free(url_encode);
-	url_encode = NULL;
+	LOG_DEBUG("sha1 encode:%s", info_hash_url_encode.c_str());
 }
 
 void Bencode::decode()
@@ -166,7 +159,7 @@ void Bencode::decode()
 				memset(str_val, 0 , int_val + 1);
 				memcpy(str_val, buff + i + pos +1, int_val);
 
-				if ( strstr(str_val, "announce") )
+				if ( strstr(str_val, "announce") &&  int_val > strlen("announce") )
 				{
 					announce_list.push_back(str_val);
 				}
@@ -234,11 +227,21 @@ void Bencode::showFileEntity()
 
 		//filter _____padding_file_0_如果您看到此文件，请升级到BitComet(比特彗星)0.85或以上版本____
 
-		if ( file_path.find("_____padding_file_" ) )
+		if ( std::string::npos == file_path.find("_____padding_file_" ) )
 		{
 			LOG_INFO("file length:%d %d.%dMB path:%s", file_length, file_length/1024/1024,
 				(file_length - (file_length/1024/1024 * 1024 * 1024))*1000/1024/1024/10,
 				file_path.c_str());
 		}
 	}
+}
+
+std::vector<std::string> Bencode::getAnnounceList() const
+{
+	return announce_list;
+}
+
+std::string Bencode::getInfoHash() const
+{
+	return info_hash_url_encode;
 }

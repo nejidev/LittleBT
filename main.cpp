@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "bencode.h"
+#include "tracker.h"
 
 #include "common_log.h"
 
@@ -14,7 +15,9 @@ int main(int argc, char **argv)
 	std::ifstream bt_file_stream;
 	char *bt_file_buffer = NULL;
 	int bt_file_size = 0;
-	Bencode bencode; 
+	Bencode bencode;
+	std::vector<std::string> announce_list;
+	std::vector<Tracker*> tracker_list;
 
 	if ( 2 != argc )
 	{
@@ -43,6 +46,25 @@ int main(int argc, char **argv)
 		bencode.setRawBuffer(bt_file_buffer, bt_file_size);
 		bencode.decode();
 		bencode.showFileEntity();
+
+		announce_list = bencode.getAnnounceList();
+
+		for ( auto &announce : announce_list )
+		{
+			LOG_DEBUG("announce:%s", announce.c_str());
+
+			Tracker *tracker = new Tracker(announce, bencode.getInfoHash());
+
+			tracker->start();
+
+			tracker_list.push_back(tracker);
+		}
+
+		//hang
+		while ( true )
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+		}
 
 		free(bt_file_buffer);
 		bt_file_buffer = NULL;

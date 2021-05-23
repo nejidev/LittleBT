@@ -32,6 +32,8 @@ public:
 	void decode();
 	void showFileEntity();
 	void sha1Encode(const char *buff, int len);
+	std::vector<std::string> getAnnounceList() const;
+	std::string getInfoHash() const;
 	~Bencode();
 };
 

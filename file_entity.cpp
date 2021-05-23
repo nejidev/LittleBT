@@ -6,7 +6,6 @@
 
 FileEntity::FileEntity():path{NULL}, length{0}
 {
-
 }
 
 FileEntity::~FileEntity()

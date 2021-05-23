@@ -17,5 +17,6 @@
 #define LOG_PRINTF(fmt, ...) if ( LOG_DEFAULT_LEVEL <= LOG_DEBUG_LEVEL ) printf(fmt, ##__VA_ARGS__);
 #define LOG_DEBUG(fmt, ...) if ( LOG_DEFAULT_LEVEL <= LOG_DEBUG_LEVEL ) printf("[Debug %s %d]" fmt "\r\n", __func__, __LINE__, ##__VA_ARGS__);
 #define LOG_INFO(fmt, ...)  if ( LOG_DEFAULT_LEVEL <= LOG_INFO_LEVEL ) printf("[Info %s %d]" fmt "\r\n", __func__, __LINE__, ##__VA_ARGS__);
+#define LOG_ERROR(fmt, ...)  if ( LOG_DEFAULT_LEVEL <= LOG_INFO_LEVEL ) printf("[Err %s %d]" fmt "\r\n", __func__, __LINE__, ##__VA_ARGS__);
 
 #endif // __COMMON__LOG__H_
