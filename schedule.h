@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <thread>
+#include <condition_variable>
 #include <mutex>
 
 #include "peer.h"
@@ -17,7 +19,13 @@ private:
 	std::vector<Tracker*> tracker_list;
 	std::vector<PeerEntity> peer_list;
 
+	bool thread_runing;
+	std::thread thread_tid;
 	std::mutex mutex;
+	std::condition_variable peer_cond;
+
+private:
+	void threadRun();
 
 public:
 	Schedule();

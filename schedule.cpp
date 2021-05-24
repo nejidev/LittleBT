@@ -12,10 +12,40 @@
 
 Schedule::Schedule()
 {
+	thread_runing = true;
+	thread_tid = std::thread(&Schedule::threadRun, this);
 }
 
 Schedule::~Schedule()
 {
+}
+
+void Schedule::threadRun()
+{
+	std::unique_lock<std::mutex> locker(mutex);
+
+	while ( thread_runing )
+	{
+		peer_cond.wait(locker);
+
+		LOG_DEBUG("peer_list len:%ld", peer_list.size());
+
+		for ( auto &peer : peer_list )
+		{
+			if ( 0 == peer.socket_fd )
+			{
+				if ( peer.connectTCP() )
+				{
+					peer.setBencode(&bencode);
+					peer.sendHandshake();
+				}
+				else
+				{
+					peer.socket_fd = -1;
+				}
+			}
+		}
+	}
 }
 
 void Schedule::addPeer(PeerEntity peer)
@@ -31,6 +61,7 @@ void Schedule::addPeer(PeerEntity peer)
 	}
 
 	peer_list.push_back(peer);
+	peer_cond.notify_all();
 
 	LOG_DEBUG("peer_list len:%ld", peer_list.size());
 }
