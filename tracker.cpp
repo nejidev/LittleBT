@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
 
 #include <curl/curl.h>
 
+#include "peer.h"
+#include "schedule.h"
 #include "common_utils.h"
 
-// #define LOG_DEFAULT_LEVEL 2
+#define LOG_DEFAULT_LEVEL 2
 
 #include "common_log.h"
 
@@ -31,6 +32,11 @@ complete{0}, incomplete{0}, interval{0}, min_interval{0}, peers{0}
 
 Tracker::~Tracker()
 {
+}
+
+void Tracker::setSchedule(Schedule *schedule)
+{
+	this->schedule = schedule;
 }
 
 static size_t sizeAlign(size_t size, size_t align)
@@ -211,8 +217,6 @@ void Tracker::benDecode(const char *buff, int len)
 void Tracker::peersDecode(const char *buff, int len)
 {
 	int i = 0;
-	std::string ip = "";
-	int port = 0;
 	peer_t *peer = (peer_t *)buff;
 
 	LOG_DEBUG("buff:%s len:%d", buff, len);
@@ -221,13 +225,9 @@ void Tracker::peersDecode(const char *buff, int len)
 
 	while ( i-- )
 	{
-		if ( peer && peer->ip && peer->port )
+		if ( peer && peer->ip && peer->port && schedule )
 		{
-			ip = inetNtoaString(peer->ip);
-			memcpy(&port, peer->port, sizeof(peer->port));
-			port = ntohs(port);
-
-			LOG_DEBUG("peers ip:%s port:%d", ip.c_str(), port);
+			schedule->addPeer(PeerEntity(peer));
 		}
 
 		peer++;

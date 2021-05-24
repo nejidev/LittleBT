@@ -18,6 +18,23 @@ Schedule::~Schedule()
 {
 }
 
+void Schedule::addPeer(PeerEntity peer)
+{
+	std::lock_guard<std::mutex> locker(mutex);
+
+	for ( auto &item : peer_list )
+	{
+		if ( item.ip == peer.ip && item.port == peer.port )
+		{
+			return ;
+		}
+	}
+
+	peer_list.push_back(peer);
+
+	LOG_DEBUG("peer_list len:%ld", peer_list.size());
+}
+
 void Schedule::startTask(std::string path)
 {
 	this->path = path;
@@ -53,6 +70,7 @@ void Schedule::startTask(std::string path)
 
 		Tracker *tracker = new Tracker(announce, bencode.getInfoHash());
 
+		tracker->setSchedule(this);
 		tracker->startEvent();
 
 		tracker_list.push_back(tracker);

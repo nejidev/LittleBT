@@ -5,14 +5,7 @@
 #include <thread>
 #include <chrono>
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct peer_t
-{
-	unsigned char ip[4];
-	unsigned char port[2];
-} peer_t;
-#pragma pack(pop)
+class Schedule;
 
 class Tracker {
 private:
@@ -28,6 +21,8 @@ private:
 	int min_interval;
 	int peers;
 
+	Schedule *schedule;
+
 private:
 	void threadRun();
 	void benDecode(const char *buff, int len);
@@ -38,6 +33,7 @@ public:
 	Tracker(std::string announce, std::string infoHash);
 	~Tracker();
 
+	void setSchedule(Schedule *schedule);
 	void startThread();
 	void stopThread();
 
